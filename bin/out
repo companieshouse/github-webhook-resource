@@ -51,7 +51,7 @@ async function processWebhook(source, params) {
 
     const config = {
         'url': url,
-        'content_type': 'json'
+        'content_type': 'form'
     };
     
     const body = {
