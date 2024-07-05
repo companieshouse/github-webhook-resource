@@ -44,7 +44,10 @@ stdin.on('end', function () {
 async function processWebhook(source, params) {
 
     const webhookEndpoint = `${source.github_api}/repos/${params.org}/${params.repo}/hooks`;
-    const url = encodeURI(`${env.ATC_EXTERNAL_URL}/api/v1/teams/${env.BUILD_TEAM_NAME}/pipelines/${env.BUILD_PIPELINE_NAME}/resources/${params.resource_name}/check/webhook?webhook_token=${params.webhook_token}`);
+
+    const targetHost = params.webhook_target_host ? params.webhook_target_host : env.ATC_EXTERNAL_URL;
+
+    const url = encodeURI(`${targetHost}/api/v1/teams/${env.BUILD_TEAM_NAME}/pipelines/${env.BUILD_PIPELINE_NAME}/resources/${params.resource_name}/check/webhook?webhook_token=${params.webhook_token}`);
 
     log(`Webhook location: ${webhookEndpoint}\n` +
         `Target Concourse resource: ${url}\n`);
