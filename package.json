@@ -11,7 +11,7 @@
   },
   "scripts": {
     "pretest": "eslint . && eslint bin/out.js",
-    "test": "jest --coverage --detectOpenHandles",
+    "test": "jest --coverage",
     "debug-out-create": "cat payload-create | node --nolazy --inspect-brk=9229 bin/out.js",
     "debug-out-delete": "cat payload-delete | node --nolazy --inspect-brk=9229 bin/out.js"
   },
