@@ -17,6 +17,10 @@ stdin.on('data', function (chunk) {
 
 stdin.on('end', function () {
     const input = inputChunks.join('');
+    if (!input) {
+        log('STDIN ended with empty input. Exiting.');
+        return;
+    }
 
     let resourceConfig;
     try {
@@ -41,22 +45,52 @@ stdin.on('end', function () {
     processWebhook(source, params);
 });
 
+function buildUrl(source, params) {
+    const instanceVars = buildInstanceVariables(params);
+    const payloadBaseUrl = params.payload_base_url ? params.payload_base_url : env.ATC_EXTERNAL_URL;
+    const pipeline = params.pipeline ? params.pipeline : env.BUILD_PIPELINE_NAME;
+
+    return encodeURI(`${payloadBaseUrl}/api/v1/teams/${env.BUILD_TEAM_NAME}/pipelines/${pipeline}/resources/${params.resource_name}/check/webhook?webhook_token=${params.webhook_token}${instanceVars}`);
+}
+
+function buildInstanceVariables(params) {
+    let vars = "";
+    if (env.BUILD_PIPELINE_INSTANCE_VARS) {
+        try {
+            const instanceVars = JSON.parse(env.BUILD_PIPELINE_INSTANCE_VARS)
+            for (const [key, value] of Object.entries(instanceVars)) {
+                vars += `&vars.${key}="${value}"`;
+            }
+        } catch(exception) {
+            throw new Error(exception);
+        }
+    }
+    if ("pipeline_instance_vars" in params && params.pipeline_instance_vars) {
+        try {
+            for (const [key, value] of Object.entries(params.pipeline_instance_vars)) {
+                vars += `&vars.${key}="${value}"`;
+            }
+        } catch(exception) {
+            throw new Error(exception);
+        }
+    }
+    return vars;
+}
+
 async function processWebhook(source, params) {
 
     const webhookEndpoint = `${source.github_api}/repos/${params.org}/${params.repo}/hooks`;
-
-    const targetHost = params.webhook_target_host ? params.webhook_target_host : env.ATC_EXTERNAL_URL;
-
-    const url = encodeURI(`${targetHost}/api/v1/teams/${env.BUILD_TEAM_NAME}/pipelines/${env.BUILD_PIPELINE_NAME}/resources/${params.resource_name}/check/webhook?webhook_token=${params.webhook_token}`);
+    const url = buildUrl(source, params)
 
     log(`Webhook location: ${webhookEndpoint}\n` +
         `Target Concourse resource: ${url}\n`);
 
     const config = {
         'url': url,
-        'content_type': 'form'
+        'content_type': params.payload_content_type ? params.payload_content_type : 'json',
+        'secret': params.payload_secret
     };
-    
+
     const body = {
         'name': 'web',  // NOTE: Github plans to deprecate this field. https://developer.github.com/v3/repos/hooks/#create-a-hook
         'config': config,
@@ -178,3 +212,5 @@ function log(message) {
     // Concourse only prints stderr to user
     console.error(message);
 }
+
+module.exports = { buildInstanceVariables, buildUrl };

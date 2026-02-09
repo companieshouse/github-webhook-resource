@@ -4,13 +4,15 @@ require('ajv-errors')(ajv);
 require('ajv-keywords')(ajv, 'transform');
 
 const validOperations = ['create', 'delete'];
+const validContentTypes = ['form', 'json'];
 
 const envSchema = {
     type: 'object',
     properties: {
         ATC_EXTERNAL_URL:    { type: 'string' },
         BUILD_TEAM_NAME:     { type: 'string' },
-        BUILD_PIPELINE_NAME: { type: 'string' }
+        BUILD_PIPELINE_NAME: { type: 'string' },
+        BUILD_PIPELINE_INSTANCE_VARS: { type: 'string' }
     },
     required: ['ATC_EXTERNAL_URL', 'BUILD_TEAM_NAME', 'BUILD_PIPELINE_NAME']
 };
@@ -45,7 +47,25 @@ const configSchema = {
                     transform: ['trim', 'toEnumCase'],
                     enum: validOperations,
                     errorMessage: { enum: 'must be either create or delete' }
-                }
+                },
+                pipeline:      {
+                    type: 'string',
+                    transform: ['trim', 'toLowerCase']
+                },
+                pipeline_instance_vars: {
+                    type: 'object',
+                },
+                payload_base_url: {
+                    type: 'string',
+                    transform: ['trim', 'toLowerCase']
+                },
+                payload_content_type: {
+                    type: 'string',
+                    transform: ['trim', 'toEnumCase'],
+                    enum: validContentTypes,
+                    errorMessage: { enum: 'must be either form or json' }
+                },
+                payload_secret: { type: 'string' }
             },
             required: ['org', 'repo', 'resource_name', 'webhook_token', 'operation']
         },
