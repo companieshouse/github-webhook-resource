@@ -1,5 +1,24 @@
 const validate = require('./validate');
-const Combinatorics = require('js-combinatorics');
+
+// Return all size‑k combinations of elements from arr
+function combinations(arr, k) {
+    const result = [];
+
+    function helper(start, combo) {
+        if (combo.length === k) {
+            result.push([...combo]);
+            return;
+        }
+        for (let i = start; i < arr.length; i++) {
+            combo.push(arr[i]);
+            helper(i + 1, combo);
+            combo.pop();
+        }
+    }
+
+    helper(0, []);
+    return result;
+}
 
 describe('validate.env', () => {
     it('validates the minimum config', () => {
@@ -24,7 +43,7 @@ describe('validate.env', () => {
         ];
 
         // Generate configs each with 1 missing required field
-        const invalidConfigs = Combinatorics.combination(required, required.length - 1);
+        const invalidConfigs = combinations(required, required.length - 1);
 
         invalidConfigs.forEach(cmb => {
             // Convert generated fields to config object
@@ -93,7 +112,7 @@ describe('validate.input', () => {
         ];
 
         // Generate configs each with 1 missing required field
-        const invalidConfigs = Combinatorics.combination(required, required.length - 1);
+        const invalidConfigs = combinations(required, required.length - 1);
 
         invalidConfigs.forEach(cmb => {
             // Convert generated fields to config object

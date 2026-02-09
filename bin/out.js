@@ -3,47 +3,54 @@
 'use strict';
 
 const _ = require('lodash');
-const request = require('request-promise');
+const got = require('got');
 const validate = require('./validate');
 const env = process.env;
-const stdin = process.stdin;
 
-stdin.setEncoding('utf8');
+function cli_mode_only() {
+    const stdin = process.stdin;
 
-let inputChunks = [];
-stdin.on('data', function (chunk) {
-    inputChunks.push(chunk);
-});
+    stdin.setEncoding('utf8');
 
-stdin.on('end', function () {
-    const input = inputChunks.join('');
-    if (!input) {
-        log('STDIN ended with empty input. Exiting.');
-        return;
-    }
+    let inputChunks = [];
+    stdin.on('data', function (chunk) {
+        inputChunks.push(chunk);
+    });
 
-    let resourceConfig;
-    try {
-        resourceConfig = JSON.parse(input);
-        validate.env(process.env);
-        validate.config(resourceConfig);
-    } catch(error) {
-        log(`Error: ${error.message}`);
-        process.exit(1);
-    }
+    stdin.on('end', function () {
+        const input = inputChunks.join('');
+        if (!input) {
+            log('STDIN ended with empty input. Exiting.');
+            return;
+        }
 
-    const source = resourceConfig.source || {};
-    const params = resourceConfig.params || {};
+        let resourceConfig;
+        try {
+            resourceConfig = JSON.parse(input);
+            validate.env(process.env);
+            validate.config(resourceConfig);
+        } catch(error) {
+            log(`Error: ${error.message}`);
+            process.exit(1);
+        }
 
-    if (params.events === undefined || params.events.length === 0) {
-        params.events = ['push']
-    }
+        const source = resourceConfig.source || {};
+        const params = resourceConfig.params || {};
 
-    // Remove duplicates
-    params.events = [...new Set(params.events)];
+        if (params.events === undefined || params.events.length === 0) {
+            params.events = ['push']
+        }
 
-    processWebhook(source, params);
-});
+        // Remove duplicates
+        params.events = [...new Set(params.events)];
+
+        processWebhook(source, params);
+    });
+}
+
+if (require.main === module) {
+    cli_mode_only();
+}
 
 function buildUrl(source, params) {
     const instanceVars = buildInstanceVariables(params);
@@ -88,7 +95,7 @@ async function processWebhook(source, params) {
     const config = {
         'url': url,
         'content_type': params.payload_content_type ? params.payload_content_type : 'json',
-        'secret': params.payload_secret
+        ...(params.payload_secret && {'secret': params.payload_secret}),
     };
 
     const body = {
@@ -128,9 +135,7 @@ function getExistingHooks(webhookEndpoint, githubToken) {
 }
 
 function createWebhook(webhookEndpoint, method, githubToken, body) {
-    const bodyString = JSON.stringify(body);
-
-    callGithub(webhookEndpoint, method, githubToken, bodyString)
+    callGithub(webhookEndpoint, method, githubToken, body)
         .then(res => {
             log(`Successfully created webhook: ${res.body}`);
             emit(JSON.parse(res.body));
@@ -142,9 +147,7 @@ function createWebhook(webhookEndpoint, method, githubToken, body) {
 }
 
 function updateWebhook(webhookEndpoint, method, githubToken, body, existingHook) {
-    const bodyString = JSON.stringify(body);
-
-    callGithub(webhookEndpoint, method, githubToken, bodyString)
+    callGithub(webhookEndpoint, method, githubToken, body)
         .then(res => {
             log(`Successfully updated webhook configuration from:\n${JSON.stringify(existingHook)}\n\nto:\n${res.body}`);
             emit(JSON.parse(res.body));
@@ -165,32 +168,40 @@ function deleteWebhook(webhookEndpoint, webhook, githubToken) {
         });
 }
 
-function callGithub(uri, method, githubToken, body) {
+function callGithub(url, method, githubToken, json) {
     const options = {
-        uri: uri,
+        url: url,
         method: method,
-        body: body,
+        json: json,
         headers: {
             'Accept': 'application/vnd.github.v3+json',
             'Content-Type': 'application/json',
             'Authorization': `token ${githubToken}`,
             'User-Agent': 'node.js'
-        },
-        resolveWithFullResponse: true
+        }
     };
 
-    return request(options)
+    return got(options)
         .catch(err => {
-            log(`Error while calling Github: ${err.name}\n` +
-                `Response Status: ${err.statusCode}\n` +
-                `Message: ${JSON.stringify(JSON.parse(err.error), null, 2)}`);
-            if (err.statusCode === 404) {
-                log(`Response was 404:\n` +
-                    `    Your token's account must be an Administrator of your repo. ${uri.replace('//api.', '//')
-                                                                                          .replace('/repos', '')
-                                                                                          .replace('/hooks', '/settings/collaboration')}\n` +
-                    `    Additionally, your token must have the 'admin:repo_hook' scope. https://github.com/settings/tokens/new?scopes=admin:repo_hook`);
+            if (err instanceof got.HTTPError) {
+                log(`Error while calling Github: ${err.name}\n` +
+                    `Response Status: ${err.response.statusCode}\n` +
+                    `Message: ${err.message}`);
+                if (err.statusCode === 404) {
+                    log(`Response was 404:\n` +
+                        `    Your token's account must be an Administrator of your repo. ${uri.replace('//api.', '//')
+                                                                                            .replace('/repos', '')
+                                                                                            .replace('/hooks', '/settings/collaboration')}\n` +
+                        `    Additionally, your token must have the 'admin:repo_hook' scope. https://github.com/settings/tokens/new?scopes=admin:repo_hook`);
+                }
+            } else if (err instanceof got.TimeoutError) {
+                log('Request timed out');
+            } else if (err instanceof got.RequestError) {
+                log(`Network error: ${err.code}`);
+            } else {
+                log(`Unknown error: ${err.message}`);
             }
+
             process.exit(1);
         });
 }

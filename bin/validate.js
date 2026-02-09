@@ -1,5 +1,5 @@
 const Ajv = require('ajv');
-const ajv = new Ajv({ allErrors: true, jsonPointers: true });
+const ajv = new Ajv({ allErrors: true, jsonPointer: true });
 require('ajv-errors')(ajv);
 require('ajv-keywords')(ajv, 'transform');
 

@@ -1,4 +1,4 @@
-FROM node:16-alpine
+FROM node:25-alpine
 WORKDIR /opt/resource
 ADD bin .
 ADD bin/out.js out
