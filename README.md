@@ -70,7 +70,7 @@ Create or delete a webhook using the configured parameters.
 - `pipeline`: *Optional.* Defaults to the name of the pipeline executing the task
 - `pipeline_instance_vars`: *Optional.* Instance vars to append to the webhook url. These help Concourse identify which [instance pipeline](https://concourse-ci.org/resources.html#schema.resource.webhook_token) it should invoke
 - `payload_base_url`: *Optional.* The base URL to send the webhook payload to. Defaults to the external Concourse URL of the pipeline executing the task.
-- `payload_content_type`: *Optional.* Default: `json`
+- `payload_content_type`: *Optional.* Default: `form`
   - `json` to serialize payloads to JSON.
   - `form` to serialize payloads to x-www-form-urlencoded.
 - `payload_secret`: *Optional.* Secret that is used as the key to generate [delivery signature headers](https://docs.github.com/en/webhooks/webhook-events-and-payloads#delivery-headers), if the destination requires it for delivery validation.
