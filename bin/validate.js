@@ -55,7 +55,7 @@ const configSchema = {
                 pipeline_instance_vars: {
                     type: 'object',
                 },
-                payload_base_url: {
+                webhook_target_host: {
                     type: 'string',
                     transform: ['trim', 'toLowerCase']
                 },

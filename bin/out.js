@@ -54,7 +54,7 @@ if (require.main === module) {
 
 function buildUrl(source, params) {
     const instanceVars = buildInstanceVariables(params);
-    const payloadBaseUrl = params.payload_base_url ? params.payload_base_url : env.ATC_EXTERNAL_URL;
+    const payloadBaseUrl = params.webhook_target_host ? params.webhook_target_host : env.ATC_EXTERNAL_URL;
     const pipeline = params.pipeline ? params.pipeline : env.BUILD_PIPELINE_NAME;
 
     return encodeURI(`${payloadBaseUrl}/api/v1/teams/${env.BUILD_TEAM_NAME}/pipelines/${pipeline}/resources/${params.resource_name}/check/webhook?webhook_token=${params.webhook_token}${instanceVars}`);

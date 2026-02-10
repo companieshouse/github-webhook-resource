@@ -61,7 +61,7 @@ describe('out', () => {
             process.env.BUILD_TEAM_NAME = 'team';
             const params = {
                 pipeline: 'param-pipeline',
-                payload_base_url: 'https://param-example.com',
+                webhook_target_host: 'https://param-example.com',
                 resource_name: 'resource',
                 webhook_token: 'token'
             }

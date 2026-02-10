@@ -137,7 +137,7 @@ describe('validate.input', () => {
             'params.webhook_token',
             'params.operation',
             'params.pipeline',
-            'params.payload_base_url',
+            'params.webhook_target_host',
             'params.payload_content_type',
             'params.payload_secret'
         ];
@@ -155,7 +155,7 @@ describe('validate.input', () => {
                     webhook_token: '',
                     operation: 'create',
                     pipeline: '',
-                    payload_base_url: '',
+                    webhook_target_host: '',
                     payload_content_type: 'json',
                     payload_secret: ''
                 }
@@ -185,7 +185,7 @@ describe('validate.input', () => {
                 events: ['pUsH'],
                 pipeline: 'mYPipeline',
                 pipeline_instance_vars: {},
-                payload_base_url: 'hTTps://ExampLe.com',
+                webhook_target_host: 'hTTps://ExampLe.com',
                 payload_content_type: 'JsOn'
             }
         };
@@ -194,7 +194,7 @@ describe('validate.input', () => {
         expect(config.params.operation).toBe('create');
         expect(config.params.events).toEqual(['push']);
         expect(config.params.pipeline).toBe('mypipeline');
-        expect(config.params.payload_base_url).toBe('https://example.com');
+        expect(config.params.webhook_target_host).toBe('https://example.com');
         expect(config.params.payload_content_type).toBe('json');
     });
 
@@ -213,7 +213,7 @@ describe('validate.input', () => {
                 events: [' push '],
                 pipeline: ' mypipeline ',
                 pipeline_instance_vars: {},
-                payload_base_url: ' https://example.com ',
+                webhook_target_host: ' https://example.com ',
                 payload_content_type: ' json '
             }
         };
@@ -222,7 +222,7 @@ describe('validate.input', () => {
         expect(config.params.operation).toBe('create');
         expect(config.params.events).toEqual(['push']);
         expect(config.params.pipeline).toBe('mypipeline');
-        expect(config.params.payload_base_url).toBe('https://example.com');
+        expect(config.params.webhook_target_host).toBe('https://example.com');
         expect(config.params.payload_content_type).toBe('json');
     });
 
@@ -246,7 +246,7 @@ describe('validate.input', () => {
                     events: [],
                     pipeline: '',
                     pipeline_instance_vars: {},
-                    payload_base_url: '',
+                    webhook_target_host: '',
                     payload_content_type: 'json',
                     payload_secret: ''
                 }
@@ -281,7 +281,7 @@ describe('validate.input', () => {
                     events: [],
                     pipeline: '',
                     pipeline_instance_vars: {},
-                    payload_base_url: '',
+                    webhook_target_host: '',
                     payload_content_type: 'json',
                     payload_secret: ''
                 }
