@@ -4,6 +4,8 @@ ADD bin .
 ADD bin/out.js out
 ADD package.json .
 
+RUN npm install -g npm@latest
+
 RUN NODE_ENV=production npm install --quiet
 RUN apk update \
   && apk add jq \
