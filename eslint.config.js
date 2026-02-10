@@ -1,6 +1,8 @@
-export default [
-  {
-    ignores: [".gitignore"],
-  },
-]
+// eslint.config.js
+const { defineConfig } = require("eslint/config");
 
+module.exports = defineConfig([
+	{
+		ignores: [".gitignore"],
+	},
+]);
