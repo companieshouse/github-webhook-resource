@@ -1,23 +1,22 @@
 const validate = require('./validate');
 
-// Return all size‑k combinations of elements from arr
-function combinations(arr, k) {
-    const result = [];
+// Return all combinations of elements from array of specified size
+function combinations(array, size) {
+    let combos = [[]];
 
-    function helper(start, combo) {
-        if (combo.length === k) {
-            result.push([...combo]);
-            return;
+    for (const element of array) {
+        const newCombos = [];
+
+        for (const combo of combos) {
+            if (combo.length < size) {
+                newCombos.push([...combo, element]);
+            }
         }
-        for (let i = start; i < arr.length; i++) {
-            combo.push(arr[i]);
-            helper(i + 1, combo);
-            combo.pop();
-        }
+
+        combos = [...combos, ...newCombos];
     }
 
-    helper(0, []);
-    return result;
+    return combos.filter(c => c.length === size);
 }
 
 describe('validate.env', () => {
