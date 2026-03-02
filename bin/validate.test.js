@@ -1,5 +1,23 @@
 const validate = require('./validate');
-const Combinatorics = require('js-combinatorics');
+
+// Return all combinations of elements from array of specified size
+function combinations(array, size) {
+    let combos = [[]];
+
+    for (const element of array) {
+        const newCombos = [];
+
+        for (const combo of combos) {
+            if (combo.length < size) {
+                newCombos.push([...combo, element]);
+            }
+        }
+
+        combos = [...combos, ...newCombos];
+    }
+
+    return combos.filter(c => c.length === size);
+}
 
 describe('validate.env', () => {
     it('validates the minimum config', () => {
@@ -24,7 +42,7 @@ describe('validate.env', () => {
         ];
 
         // Generate configs each with 1 missing required field
-        const invalidConfigs = Combinatorics.combination(required, required.length - 1);
+        const invalidConfigs = combinations(required, required.length - 1);
 
         invalidConfigs.forEach(cmb => {
             // Convert generated fields to config object
@@ -93,7 +111,7 @@ describe('validate.input', () => {
         ];
 
         // Generate configs each with 1 missing required field
-        const invalidConfigs = Combinatorics.combination(required, required.length - 1);
+        const invalidConfigs = combinations(required, required.length - 1);
 
         invalidConfigs.forEach(cmb => {
             // Convert generated fields to config object
@@ -117,6 +135,10 @@ describe('validate.input', () => {
             'params.resource_name',
             'params.webhook_token',
             'params.operation',
+            'params.pipeline',
+            'params.webhook_target_host',
+            'params.payload_content_type',
+            'params.payload_secret'
         ];
 
         constrainedFields.forEach(field => {
@@ -130,7 +152,11 @@ describe('validate.input', () => {
                     repo: '',
                     resource_name: '',
                     webhook_token: '',
-                    operation: 'create'
+                    operation: 'create',
+                    pipeline: '',
+                    webhook_target_host: '',
+                    payload_content_type: 'json',
+                    payload_secret: ''
                 }
             };
 
@@ -155,13 +181,20 @@ describe('validate.input', () => {
                 resource_name: '',
                 webhook_token: '',
                 operation: 'CrEaTe',
-                events: ['pUsH']
+                events: ['pUsH'],
+                pipeline: 'mYPipeline',
+                pipeline_instance_vars: {},
+                webhook_target_host: 'hTTps://ExampLe.com',
+                payload_content_type: 'JsOn'
             }
         };
 
         expect(() => validate.config(config)).not.toThrow();
         expect(config.params.operation).toBe('create');
         expect(config.params.events).toEqual(['push']);
+        expect(config.params.pipeline).toBe('mypipeline');
+        expect(config.params.webhook_target_host).toBe('https://example.com');
+        expect(config.params.payload_content_type).toBe('json');
     });
 
     it('trims whitespace', () => {
@@ -176,18 +209,25 @@ describe('validate.input', () => {
                 resource_name: '',
                 webhook_token: '',
                 operation: ' create ',
-                events: [' push ']
+                events: [' push '],
+                pipeline: ' mypipeline ',
+                pipeline_instance_vars: {},
+                webhook_target_host: ' https://example.com ',
+                payload_content_type: ' json '
             }
         };
 
         expect(() => validate.config(config)).not.toThrow();
         expect(config.params.operation).toBe('create');
         expect(config.params.events).toEqual(['push']);
+        expect(config.params.pipeline).toBe('mypipeline');
+        expect(config.params.webhook_target_host).toBe('https://example.com');
+        expect(config.params.payload_content_type).toBe('json');
     });
 
     it('checks fields with array constraint', () => {
         const constrainedFields = [
-            'params.events'
+            'params.events',
         ];
 
         constrainedFields.forEach(field => {
@@ -202,7 +242,47 @@ describe('validate.input', () => {
                     resource_name: '',
                     webhook_token: '',
                     operation: 'create',
-                    events: []
+                    events: [],
+                    pipeline: '',
+                    pipeline_instance_vars: {},
+                    webhook_target_host: '',
+                    payload_content_type: 'json',
+                    payload_secret: ''
+                }
+            };
+
+            expect(() => validate.config(config)).not.toThrow();
+
+            const fieldTree = field.split('.');
+            config[fieldTree[0]][fieldTree[1]] = null;
+
+            expect(() => validate.config(config)).toThrow();
+        });
+    });
+
+    it('checks fields with object constraint', () => {
+        const constrainedFields = [
+            'params.pipeline_instance_vars'
+        ];
+
+        constrainedFields.forEach(field => {
+            const config = {
+                source: {
+                    github_api: '',
+                    github_token: ''
+                },
+                params: {
+                    org: '',
+                    repo: '',
+                    resource_name: '',
+                    webhook_token: '',
+                    operation: 'create',
+                    events: [],
+                    pipeline: '',
+                    pipeline_instance_vars: {},
+                    webhook_target_host: '',
+                    payload_content_type: 'json',
+                    payload_secret: ''
                 }
             };
 
